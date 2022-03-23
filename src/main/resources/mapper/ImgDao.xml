@@ -2,6 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.newland.esop.dao.ImgDao">
+    <delete id="removeByIds" parameterType="java.util.List">
+        delete from tbl_img where fid in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
 
     <select id="getByIds" resultType="com.newland.esop.pojo.Img"
             parameterType="java.util.List">

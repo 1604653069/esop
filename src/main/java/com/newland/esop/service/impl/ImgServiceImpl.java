@@ -14,4 +14,9 @@ public class ImgServiceImpl extends ServiceImpl<ImgDao, Img> implements ImgServi
     public List<Img> getByIds(List<Long> ids) {
         return baseMapper.getByIds(ids);
     }
+
+    @Override
+    public void removeByIds(List<Long> ids) {
+        baseMapper.removeByIds(ids);
+    }
 }

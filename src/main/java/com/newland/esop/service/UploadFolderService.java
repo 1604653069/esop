@@ -2,6 +2,7 @@ package com.newland.esop.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.newland.esop.pojo.ImageUpload;
 import com.newland.esop.pojo.UploadFolder;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,4 +36,12 @@ public interface UploadFolderService extends IService<UploadFolder> {
      */
     String getFolderDirPath(Long id);
 
+    /**
+     * 删除整个流水线
+     * @param id
+     * @return
+     */
+    boolean deleteFolder(Long id);
+
+    ImageUpload uploadImage(MultipartFile multipartFile);
 }

@@ -6,7 +6,10 @@ import com.newland.esop.service.ChildrenFolderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("children")
@@ -28,6 +31,16 @@ public class ChildrenFolderController {
         }
     }
 
+    @GetMapping("/addChildrenFolder2")
+    public R addChildrenFolder(@RequestParam("filenames")String filenames,@RequestParam("fid")Long fid,@RequestParam("name")String name) {
+        if (!filenames.isEmpty()) {
+            String[] split = filenames.split(",");
+            List<String> filename = Arrays.stream(split).collect(Collectors.toList());
+            childrenFolderService.addChildrenFolder2(fid,name,filename);
+        }
+        return R.ok();
+    }
+
     @PostMapping("/updateChildrenFolder")
     public R updateChildrenFolder(@RequestParam("fid")Long fid,@RequestParam("id")Long id,@RequestParam("name")String name, @RequestParam("uploadFile") List<MultipartFile> multipartFile) {
         boolean b = childrenFolderService.updateChildrenFolder(fid, id, name, multipartFile);
@@ -36,6 +49,12 @@ public class ChildrenFolderController {
         } else {
             return R.error();
         }
+    }
+
+    @GetMapping("/updateChildrenFolder2")
+    public R updateChildrenFolder2(@RequestParam("fid")Long fid,@RequestParam("ids")String ids, @RequestParam("uploadFileNames")String filenames) {
+        childrenFolderService.updateChildrenFolder2(fid,ids,filenames);
+        return R.ok();
     }
 
     @GetMapping("/deleteImg")
@@ -53,4 +72,6 @@ public class ChildrenFolderController {
         UploadFolder folder = childrenFolderService.getFolderByChildId(id);
         return R.ok().put("data",folder);
     }
+
+
 }

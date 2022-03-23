@@ -3,11 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <title>新增文档 - 光年(Light Year Admin)后台管理系统模板</title>
+    <title>新增图片</title>
     <link rel="icon" href="favicon.ico" type="image/ico">
-    <meta name="keywords" content="LightYear,光年,后台模板,后台管理系统,光年HTML模板">
-    <meta name="description" content="LightYear是一个基于Bootstrap v3.3.7的后台管理系统的HTML模板。">
-    <meta name="author" content="yinqi">
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/materialdesignicons.min.css" rel="stylesheet">
     <!--标签插件-->
@@ -36,6 +33,9 @@
                     <ul class="nav nav-drawer">
                         <li class="nav-item"> <a href="index"><i class="mdi mdi-home"></i> 后台首页</a> </li>
                     </ul>
+                    <ul class="nav nav-drawer">
+                        <li class="nav-item"> <a href="flow"><i class="mdi mdi-home"></i> 流水线</a> </li>
+                    </ul>
                 </nav>
             </div>
 
@@ -54,7 +54,7 @@
                             <span class="lyear-toggler-bar"></span>
                             <span class="lyear-toggler-bar"></span>
                         </div>
-                        <span class="navbar-page-title"> 新增流水线操作图片</span>
+                        <span class="navbar-page-title">添加->操作指导书</span>
                     </div>
 
                     <ul class="topbar-right">
@@ -214,7 +214,7 @@
                         <div class="card">
                             <div class="card-body">
 
-                                <form action="#" id="uploadForm" class="row">
+                                <form id="uploadForm" class="row">
                                     <div class="form-group col-md-12">
                                         <label for="folderName">流水线</label>
                                         <input type="hidden" id="id" >
@@ -224,7 +224,7 @@
                                     </div>
                                     <div class="form-group col-md-12">
                                         <label for="name">设备编号</label>
-                                        <input type="text" onkeyup="value=value.replace(/[\u4e00-\u9fa5]/ig,'')" class="form-control" id="name" name="name" value="" placeholder="如:01-xx、02-xx" />
+                                        <input type="text"  onkeyup="value=value.replace(/[\u4e00-\u9fa5]/ig,'')" class="form-control" id="name" name="name" value="" placeholder="如:01-xx、02-xx" />
                                     </div>
                                     <div class="form-group col-md-12">
                                         <label>图片上传</label>
@@ -233,13 +233,18 @@
                                                 <li style="height: 175px" class="col-xs-4 col-sm-3 col-md-2">
                                                     <a class="pic-add" id="add-pic-btn" onclick="openFile()" title="点击上传"></a>
                                                 </li>
-                                                <input type="file" style="display:none;" multiple="multiple" name="uploadFile" id="uploadFile">
+                                                <input type="file" style="display:none;" accept="image/*"  name="uploadFile" id="uploadFile">
                                             </ul>
                                         </div>
                                     </div>
                                     <div class="form-group col-md-12">
-                                        <button type="button" class="btn btn-primary ajax-post" onclick="test2()" target-form="add-form">确 定</button>
+<!--                                        <button type="button" class="btn btn-primary ajax-post" onclick="uploadForm()" target-form="add-form">确 定</button>-->
+                                        <button type="button" class="btn btn-primary ajax-post" onclick="uploadChildren()" target-form="add-form">确 定</button>
                                         <button type="button" class="btn btn-default" onclick="javascript:history.back(-1);return false;">返 回</button>
+                                    </div>
+
+                                    <div id="tempFileName" style="display: none">
+
                                     </div>
                                 </form>
                             </div>
@@ -305,17 +310,50 @@
             var $img = $("#showImgs");
             var li = "";
             if(fileObj && fileObj.files && fileObj.files[0]){
-                dataURL = windowURL.createObjectURL(fileObj.files[0]);
-                li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
-                li+="<figure>";
-                li+="<img src='"+dataURL+"' width='250px' height='175px'/>";
-                li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
-                li+=" <a class='btn btn-round btn-square btn-danger' onclick='rm(this)' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
-                li+="</figcaption>";
-                li+="</figure>";
-                li+="</li>";
-                $img.append(li);
-            }else{
+                // dataURL = windowURL.createObjectURL(fileObj.files[0]);
+                // li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
+                // li+="<figure>";
+                // li+="<img src='"+dataURL+"' width='250px' height='175px'/>";
+                // li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
+                // li+=" <a class='btn btn-round btn-square btn-danger' onclick='rm(this)' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
+                // li+="</figcaption>";
+                // li+="</figure>";
+                // li+="</li>";
+                // $img.append(li);
+                //-------------------------------上面是原先的方案------------------------------------
+                /*现在先将文件上传到临时文件中后添加到指定文件中*/
+                var formData = new FormData();
+                formData.append("uploadFile",$("#uploadFile")[0].files[0]);
+                $.ajax({
+                    url: 'upload/image',
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    success:function (result) {
+                        if (result.code ==0) {
+                            console.log(result.data.filename);
+                            var img =JSON.stringify(result);
+                            dataURL = windowURL.createObjectURL(fileObj.files[0]);
+                            li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
+                            li+="<figure>";
+                            li+="<img src='"+dataURL+"' width='250px' height='175px'/>";
+                            li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
+                            li+="<input name='filename' type='hidden' value='"+result.data.filename+"' />"
+                            li+="<a class='btn btn-round btn-square btn-danger' onclick='rm(this,"+img+")' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
+                            li+="</figcaption>";
+                            li+="</figure>";
+                            li+="</li>";
+                            $img.append(li);
+
+
+                        } else {
+                            alert("上传失败!")
+                        }
+                    }
+                });
+            } else{
                 dataURL = $file.val();
                 var imgObj = document.getElementById("preview");
                 imgObj.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale)";
@@ -328,12 +366,23 @@
         $('#uploadFile').click();
     }
 
-    function rm(obj){
+    function rm(obj,filename){
         var removeImg=$(obj);
+        console.log("filename->"+filename.data.filename)
         removeImg.parent().parent().parent().remove();
+        //----------------------------------------------------删除临时文件夹中的图片
+        var param = {'filename':filename.data.filename}
+        $.ajax({
+            url: 'upload/delImg',
+            type: 'GET',
+            data:param,
+            success:function (result) {
+
+            }
+        });
     }
 
-    function test2() {
+    function uploadForm() {
         var formData = new FormData();
         formData.append("uploadFile",$("#uploadFile")[0].files[0]);
         formData.append("fid",$("#id").val())
@@ -354,7 +403,63 @@
                 }
             }
         });
+    }
 
+    function deleteImg(filename) {
+        var formData = {'filename':filename}
+        $.ajax({
+            url: 'upload/delImg',
+            type: 'GET',
+            data: formData,
+            success:function (result) {
+                if (result.code==0) {
+                    alert("请求成功")
+                }
+            }
+        });
+    }
+
+    function uploadChildren() {
+        var filenames = new Array();
+        $("input[name='filename']").each(function (){
+            filenames.push($(this).val())
+        });
+        if (filenames.length>0) {
+            console.log("上传的文件名为:"+filenames);
+        } else {
+            alert("上传的文件不能为空")
+            return;
+        }
+        var name = $("#name").val()
+        console.log("name--->"+name)
+        if (name.isEmpty||name.length==0) {
+            alert("输入的设备名称不能为空")
+            return;
+        }
+        var stringFilename=""
+        $.each(filenames,function (i,filename){
+            if (i !=filenames.length-1)
+                stringFilename+=filename+","
+            else
+                stringFilename+=filename
+        });
+        console.log("整理后的字符串为:"+stringFilename)
+        var param = {
+            'fid':getUrlParam('id'),
+            'name':name,
+            'filenames':stringFilename
+        }
+        $.ajax({
+            url: 'children/addChildrenFolder2',
+            type: 'get',
+            data: param,
+            success:function (result) {
+                if (result.code==0) {
+                    alert("添加成功!")
+                    location.href = "image?id="+getUrlParam('id');
+                }
+            }
+        });
     }
 </script>
 </body>

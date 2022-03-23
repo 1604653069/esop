@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.newland.esop.common.FileConstants;
 import com.newland.esop.dao.UploadFolderDao;
 import com.newland.esop.pojo.ChildrenFolder;
+import com.newland.esop.pojo.ImageUpload;
 import com.newland.esop.pojo.Img;
 import com.newland.esop.pojo.UploadFolder;
 import com.newland.esop.service.ChildrenFolderService;
 import com.newland.esop.service.ImgService;
 import com.newland.esop.service.UploadFolderService;
 import com.newland.esop.utils.FTPUtils;
+import com.newland.esop.utils.FileUtils;
 import com.newland.esop.utils.UUIDUtils;
 import net.lingala.zip4j.core.ZipFile;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,6 +170,8 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
         return baseMapper.selectById(id).getFileName();
     }
 
+
+
     /**
      * 将图片封装到上级文件中
      * @param childrenFolders
@@ -177,12 +181,77 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
         for (ChildrenFolder childrenFolder:childrenFolders) {
             List<Img> imgList = new ArrayList<>();
             for (Img img:imgs) {
-                if (img.getFid() == childrenFolder.getId()) {
+                if (img.getFid().intValue() == childrenFolder.getId().intValue()) {
                     imgList.add(img);
                 }
             }
             childrenFolder.setImgList(imgList);
         }
+    }
+
+    /**
+     * 删除整条流水线
+     */
+    @Override
+    public boolean deleteFolder(Long id) {
+        //删除ftp上的文件
+        //获取要删除目录的文件名
+        UploadFolder uploadFolder = baseMapper.selectById(id);
+        String fileName = uploadFolder.getFileName();
+        System.out.println("删除的文件名为:"+fileName);
+        File file = new File(ftpUtils.getCURRENT_DIR()+"/"+fileName);
+        if (file.exists()) {
+            //如果存在文件，则删除
+            //存在该文件
+            System.out.println("存在该文件");
+            FileUtils.deleteDir(file);
+            //删除数据库中的请求信息
+            QueryWrapper<ChildrenFolder> childrenFolderQueryWrapper = new QueryWrapper<>();
+            childrenFolderQueryWrapper.eq("fid",id);
+            List<ChildrenFolder> childrenFolders = childrenFolderService.list(childrenFolderQueryWrapper);
+            List<Long> childrenIds = childrenFolders.stream().map(childrenFolder -> childrenFolder.getId()).collect(Collectors.toList());
+            //删除所有的图片
+            imgService.removeByIds(childrenIds);
+            //删除所有的子目录
+            childrenFolderService.removeByIds(childrenIds);
+            //删除流水目录
+            baseMapper.deleteById(id);
+        } else {
+            System.out.println("删除的文件不存在!");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 上传到临时文件
+     * @return
+     */
+    @Override
+    public ImageUpload uploadImage(MultipartFile multipartFile) {
+        ImageUpload imageUpload = new ImageUpload();
+        try {
+        //1.获取源文件的名称
+        String originName = multipartFile.getOriginalFilename().substring(0,multipartFile.getOriginalFilename().lastIndexOf("."));
+        System.out.println("源文件名称:"+originName);
+        //2.创建新文件名称
+        String uuid = UUIDUtils.getUUID();
+        System.out.println("重命名文件名称:"+uuid);
+        //5.获取源文件的后缀
+        String suffix = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+        imageUpload.setFilename(originName+"-"+uuid+suffix);
+        boolean b = ftpUtils.uploadToFtp(multipartFile.getInputStream(), originName+"-"+uuid+suffix, false);
+        if (b) {
+            System.out.println("文件上传成功");
+            imageUpload.setResult(true);
+        } else {
+            System.out.println("文件上传失败");
+            imageUpload.setResult(false);
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return imageUpload;
     }
 
 }

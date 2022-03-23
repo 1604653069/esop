@@ -21,6 +21,9 @@
         <img id="bigimg" style="border:5px solid #fff;" src="" />
     </div>
 </div>
+<div style="display: none" id="delImgInfo">
+
+</div>
 <div class="lyear-layout-web">
     <div class="lyear-layout-container">
         <!--左侧导航-->
@@ -35,6 +38,9 @@
                 <nav class="sidebar-main">
                     <ul class="nav nav-drawer">
                         <li class="nav-item"> <a href="index"><i class="mdi mdi-home"></i> 后台首页</a> </li>
+                    </ul>
+                    <ul class="nav nav-drawer">
+                        <li class="nav-item"> <a href="flow"><i class="mdi mdi-home"></i> 流水线</a> </li>
                     </ul>
                 </nav>
             </div>
@@ -54,7 +60,7 @@
                             <span class="lyear-toggler-bar"></span>
                             <span class="lyear-toggler-bar"></span>
                         </div>
-                        <span class="navbar-page-title"> 新增流水线操作图片</span>
+                        <span class="navbar-page-title">修改->操作指导书</span>
                     </div>
 
                     <ul class="topbar-right">
@@ -226,7 +232,7 @@
                                     </div>
                                     <div class="form-group col-md-12">
                                         <label for="name">设备编号</label>
-                                        <input type="text" onkeyup="value=value.replace(/[\u4e00-\u9fa5]/ig,'')" class="form-control" id="name" name="name" value="" placeholder="如:01-xx、02-xx" />
+                                        <input type="text" disabled="disabled" onkeyup="value=value.replace(/[\u4e00-\u9fa5]/ig,'')" class="form-control" id="name" name="name" value="" placeholder="如:01-xx、02-xx" />
                                     </div>
                                     <div class="form-group col-md-12">
                                         <label>图片上传</label>
@@ -235,7 +241,7 @@
                                                 <li style="height: 175px" class="col-xs-4 col-sm-3 col-md-2">
                                                     <a class="pic-add" id="add-pic-btn" onclick="openFile()" title="点击上传"></a>
                                                 </li>
-                                                <input type="file" style="display:none;" multiple="multiple" name="uploadFile" id="uploadFile">
+                                                <input type="file" style="display:none;" accept="image/*"  name="uploadFile" id="uploadFile">
                                             </ul>
                                         </div>
                                     </div>
@@ -275,7 +281,7 @@
             url: 'children/getChildrenImg',
             type: 'get',
             data:dataForm,
-            success:function(result){
+            success:function(result) {
                if (result.code ==0) {
                    var option = "";
                    option+="<option value="+result.data.id+">"+result.data.originName+"</option>"
@@ -283,13 +289,14 @@
                    $('#fid').val(result.data.id);
                    $('#id').val(result.data.childrenFolderList[0].id);
                    $('#name').val(result.data.childrenFolderList[0].fileName)
+                   $('#imgId').val(result.data.childrenFolderList[0].imgList[0].id)
                    $.each(result.data.childrenFolderList[0].imgList,function (i,img){
                        var li="";
                        li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
                        li+="<figure>";
                        li+="<img src='"+img.imgUrl+"' width='250px' height='175px'/>";
                        li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
-                       li+=" <a class='btn btn-round btn-square btn-danger' onclick='rm(this)' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
+                       li+=" <a class='btn btn-round btn-square btn-danger' onclick='rmResourceImg(this,"+JSON.stringify(img.id)+")' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
                        li+="</figcaption>";
                        li+="</figure>";
                        li+="</li>";
@@ -322,16 +329,35 @@
             var $img = $("#showImgs");
             var li = "";
             if(fileObj && fileObj.files && fileObj.files[0]){
-                dataURL = windowURL.createObjectURL(fileObj.files[0]);
-                li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
-                li+="<figure>";
-                li+="<img src='"+dataURL+"' width='250px' height='175px'/>";
-                li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
-                li+=" <a class='btn btn-round btn-square btn-danger' onclick='rm(this)' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
-                li+="</figcaption>";
-                li+="</figure>";
-                li+="</li>";
-                $img.append(li);
+                var formData = new FormData();
+                formData.append("uploadFile",$("#uploadFile")[0].files[0]);
+                $.ajax({
+                    url: 'upload/image',
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    success:function (result) {
+                        if (result.code ==0) {
+                            console.log(result.data.filename);
+                            var img =JSON.stringify(result);
+                            dataURL = windowURL.createObjectURL(fileObj.files[0]);
+                            li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
+                            li+="<figure>";
+                            li+="<img src='"+dataURL+"' width='250px' height='175px'/>";
+                            li+="<figcaption><a class='btn btn-round btn-square btn-primary'><i class='mdi mdi-eye'></i></a>";
+                            li+="<input name='filename' type='hidden' value='"+result.data.filename+"' />"
+                            li+="<a class='btn btn-round btn-square btn-danger' onclick='rm(this,"+img+")' ><i class='mdi mdi-delete'></i></a></figcaption></figure></li>";
+                            li+="</figcaption>";
+                            li+="</figure>";
+                            li+="</li>";
+                            $img.append(li);
+                        } else {
+                            alert("上传失败!")
+                        }
+                    }
+                });
             }else{
                 dataURL = $file.val();
                 var imgObj = document.getElementById("preview");
@@ -345,39 +371,93 @@
         $('#uploadFile').click();
     }
 
-    function rm(obj){
+    function rm(obj,filename){
+        var removeImg=$(obj);
+        console.log("filename->"+filename.data.filename)
+        removeImg.parent().parent().parent().remove();
+        //----------------------------------------------------删除临时文件夹中的图片
+        var param = {'filename':filename.data.filename}
+        $.ajax({
+            url: 'upload/delImg',
+            type: 'GET',
+            data:param,
+            success:function (result) {
+
+            }
+        });
+    }
+    function rmResourceImg(obj,id){
         var removeImg=$(obj);
         removeImg.parent().parent().parent().remove();
+        //记录原先显示服务器回传未修改的图片，即原图
+        var inputInfo = "<input type='hidden' name='flag' value='"+id+"'/>";
+        $('#delImgInfo').append(inputInfo);
+
     }
 
     function updateInfo() {
-        var formData = new FormData();
-        formData.append("uploadFile",$("#uploadFile")[0].files[0]);
-        formData.append("fid",$("#fid").val())
-        formData.append("id",$("#id").val())
-        formData.append("name",$("#name").val())
+        var ids = new Array();
+        var flag = false;
+        var idsString = '';
+        //1.获取服务器回传的图片是否删除
+        $("input[name='flag']").each(function (){
+            console.log("服务器回传的原图id："+$(this).val());
+            ids.push($(this).val());
+        });
+        //如果服务器回传的图片没有被删除,即更新就只是添加新的文件
+        if (ids.length==0) {
+            flag = false;
+        } else {
+            flag = true;
+            //拼接删除服务器回传图片的id
+            $.each(ids,function (i,id){
+                if (i!=ids.length-1)
+                    idsString+=id+","
+                else
+                    idsString+=id
+            });
+        }
+        var filenames = new Array();
+        $("input[name='filename']").each(function (){
+            filenames.push($(this).val())
+        });
+        if (!flag && filenames.length==0) {
+            console.log("既没有删除原先的文件，也没有上传新的文件");
+            history.back(-1);
+        }
+        var filenameString =''
+        if (filenames.length>0){
+            $.each(filenames,function (i,filename) {
+                if (i!=filenames.length-1)
+                    filenameString+=filename+','
+                else
+                    filenameString+=filename
+            });
+        }
+
+        var param = {
+            'fid':getUrlParam('id'),
+            'ids':idsString,
+            'uploadFileNames':filenameString
+        }
         $.ajax({
-            url: 'children/updateChildrenFolder',
-            type: 'POST',
-            data: formData,
-            cache: false,
-            processData: false,
-            contentType: false,
+            url: 'children/updateChildrenFolder2',
+            type: 'get',
+            data: param,
             success:function (result) {
-                if (result.code ==0) {
-                    alert("上传成功!")
-                    location.href = "image?id="+getUrlParam('id');
-                } else {
-                    alert("上传失败!")
+                if (result.code==0) {
+                    alert("修改成功!")
+                    location.href = "image?id="+$('#fid').val();
                 }
             }
         });
+
     }
 
     function deleteImg(){
         var fid = $('#id').val();
         var id = $('#imgId').val();
-        var dataForm = {'fid':fid,'id':id};
+        var dataForm = {'fid':fid,"id":id};
         console.log("dataForm:"+dataForm);
         $.ajax({
             url: 'children/deleteImg',

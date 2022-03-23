@@ -11,4 +11,6 @@ import java.util.List;
 public interface ImgDao extends BaseMapper<Img> {
 
     List<Img> getByIds(@Param("fIds") List<Long> id);
+
+    void removeByIds(@Param("ids")List<Long> id);
 }

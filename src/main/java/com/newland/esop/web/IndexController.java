@@ -26,4 +26,14 @@ public class IndexController {
     public String editImage() {
         return "updateImage";
     }
+
+    @GetMapping("/flow")
+    public String flow() {
+        return "flow";
+    }
+
+    @GetMapping("/addFlow")
+    public String addFlow() {
+        return "addFlow";
+    }
 }
