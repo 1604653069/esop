@@ -13,6 +13,9 @@
     <!--标签插件-->
     <link rel="stylesheet" href="js/jquery-tags-input/jquery.tagsinput.min.css">
     <link href="css/style.min.css" rel="stylesheet">
+    <!--对话框-->
+    <link rel="stylesheet" href="js/jconfirm/jquery-confirm.min.css">
+    <link rel="stylesheet" href="css/style.min.css" >
 </head>
 
 <body>
@@ -42,6 +45,9 @@
                     <ul class="nav nav-drawer">
                         <li class="nav-item"> <a href="flow"><i class="mdi mdi-home"></i> 流水线</a> </li>
                     </ul>
+                    <ul class="nav nav-drawer">
+                        <li class="nav-item"> <a href="updateFile"><i class="mdi mdi-home"></i>程序升级</a> </li>
+                    </ul>
                 </nav>
             </div>
 
@@ -64,19 +70,7 @@
                     </div>
 
                     <ul class="topbar-right">
-                        <li class="dropdown dropdown-profile">
-                            <a href="javascript:void(0)" data-toggle="dropdown">
-                                <img class="img-avatar img-avatar-48 m-r-10" src="images/users/avatar.jpg" alt="笔下光年" />
-                                <span>笔下光年 <span class="caret"></span></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li> <a href="lyear_pages_profile.html"><i class="mdi mdi-account"></i> 个人信息</a> </li>
-                                <li> <a href="lyear_pages_edit_pwd.html"><i class="mdi mdi-lock-outline"></i> 修改密码</a> </li>
-                                <li> <a href="javascript:void(0)"><i class="mdi mdi-delete"></i> 清空缓存</a></li>
-                                <li class="divider"></li>
-                                <li> <a href="lyear_pages_login.html"><i class="mdi mdi-logout-variant"></i> 退出登录</a> </li>
-                            </ul>
-                        </li>
+
                         <!--切换主题配色-->
                         <li class="dropdown dropdown-skin">
                             <span data-toggle="dropdown" class="icon-palette"><i class="mdi mdi-palette"></i></span>
@@ -226,6 +220,7 @@
                                         <input type="hidden" id="fid" >
                                         <input type="hidden" id="id">
                                         <input type="hidden" id="imgId">
+                                        <input type="hidden" id="photoNum">
                                         <div class="form-controls">
                                             <select name="type" class="form-control" id="folderName"></select>
                                         </div>
@@ -267,6 +262,7 @@
 <script type="text/javascript" src="js/perfect-scrollbar.min.js"></script>
 <!--标签插件-->
 <script src="js/jquery-tags-input/jquery.tagsinput.min.js"></script>
+<script src="js/jconfirm/jquery-confirm.min.js"></script>
 <script type="text/javascript" src="js/main.min.js"></script>
 <script type="text/javascript">
     $(document).ready(function(){
@@ -290,6 +286,7 @@
                    $('#id').val(result.data.childrenFolderList[0].id);
                    $('#name').val(result.data.childrenFolderList[0].fileName)
                    $('#imgId').val(result.data.childrenFolderList[0].imgList[0].id)
+                   $('#photoNum').val(result.data.childrenFolderList[0].imgList.length)
                    $.each(result.data.childrenFolderList[0].imgList,function (i,img){
                        var li="";
                        li+="<li className='col-xs-4 col-sm-3 col-md-2'>";
@@ -399,11 +396,15 @@
         var ids = new Array();
         var flag = false;
         var idsString = '';
+        var num = 0;
+        var count = $('#photoNum').val();
         //1.获取服务器回传的图片是否删除
         $("input[name='flag']").each(function (){
             console.log("服务器回传的原图id："+$(this).val());
             ids.push($(this).val());
+            num++;
         });
+        console.log("服务器回传图片的数量为:",count,"删除图片的数量为:"+num);
         //如果服务器回传的图片没有被删除,即更新就只是添加新的文件
         if (ids.length==0) {
             flag = false;
@@ -426,6 +427,10 @@
             history.back(-1);
         }
         var filenameString =''
+        if(filenames.length ==0 && count==num){
+            alert("上传的文件不能为空!")
+            return;
+        }
         if (filenames.length>0){
             $.each(filenames,function (i,filename) {
                 if (i!=filenames.length-1)
@@ -455,23 +460,44 @@
     }
 
     function deleteImg(){
-        var fid = $('#id').val();
-        var id = $('#imgId').val();
-        var dataForm = {'fid':fid,"id":id};
-        console.log("dataForm:"+dataForm);
-        $.ajax({
-            url: 'children/deleteImg',
-            type: 'GET',
-            data:dataForm,
-            success:function (result) {
-                if (result.code ==0) {
-                    alert("删除成功")
-                    location.href = "image?id="+$('#fid').val();
-                } else {
-                    alert("删除失败!")
+        console.log("fid--->",fid,"id--->"+id);
+        $.alert({
+            title: '提示',
+            content: '是否删除该设备下的图片',
+            buttons: {
+                confirm: {
+                    text: '确认',
+                    btnClass: 'btn-primary',
+                    action: function(){
+                        var fid = $('#id').val();
+                        var id = $('#imgId').val();
+                        console.log("fid--->",fid,"id--->"+id);
+                        var dataForm = {'fid':fid,"id":id};
+                        console.log("dataForm:"+dataForm);
+                        $.ajax({
+                            url: 'children/deleteImg',
+                            type: 'GET',
+                            data:dataForm,
+                            success:function (result) {
+                                if (result.code ==0) {
+                                    alert("删除成功")
+                                    location.href = "image?id="+$('#fid').val();
+                                } else {
+                                    alert("删除失败!")
+                                }
+                            }
+                        });
+                    }
+                },
+                cancel: {
+                    text: '取消',
+                    action: function () {
+
+                    }
                 }
             }
         });
+
     }
 </script>
 </body>

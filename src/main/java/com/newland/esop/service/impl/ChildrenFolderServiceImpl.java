@@ -232,28 +232,11 @@ public class ChildrenFolderServiceImpl extends ServiceImpl<ChildrenFolderDao, Ch
         //2.查看改目录下是否还有其他图片信息，没有则删除改子目录
         QueryWrapper<Img> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("fid",fid);
-        List<Img> list = imgService.list(queryWrapper);
-        if (list!=null && list.size()>0) {
-            for (Img img:list) {
-                if (img.getId() == id) {
-                    //删除目录中的文件
-                    File[] files = file.listFiles();
-                    if (files!=null) {
-                        for (File file1:files) {
-                            if (file1.getName().equals(img.getFileName()))
-                                file1.delete();
-                        }
-                    }
-                    //删除数据库中的数据
-                    imgService.removeById(img.getId());
-                }
-            }
-        }
-        File[] files = file.listFiles();
-        if (files.length==0) {
-            file.delete();
-            baseMapper.deleteById(fid);
-        }
+        //删除数据中的数据
+        imgService.remove(queryWrapper);
+        baseMapper.deleteById(fid);
+        //删除目录
+        com.newland.esop.utils.FileUtils.deleteDir(new File(ftpUtils.getCURRENT_DIR()+"/"+uploadFolder.getFileName()+"/"+childrenFolder.getFileName()));
         return true;
     }
 
@@ -273,6 +256,18 @@ public class ChildrenFolderServiceImpl extends ServiceImpl<ChildrenFolderDao, Ch
         return uploadFolder;
     }
 
+    @Override
+    public ChildrenFolder getFolderByName(String name) {
+        QueryWrapper<ChildrenFolder> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("file_name",name);
+        ChildrenFolder childrenFolder = baseMapper.selectOne(queryWrapper);
+        QueryWrapper<Img> imgQueryWrapper = new QueryWrapper<>();
+        imgQueryWrapper.eq("fid", childrenFolder.getId());
+        List<Img> list = imgService.list(imgQueryWrapper);
+        childrenFolder.setImgList(list);
+        return childrenFolder;
+    }
+
     private void delImgById(int id) {
         Img img = imgService.getById(id);
         ChildrenFolder childrenFolder = baseMapper.selectById(img.getFid());
@@ -283,6 +278,5 @@ public class ChildrenFolderServiceImpl extends ServiceImpl<ChildrenFolderDao, Ch
             imgService.removeById(id);
         }
     }
-
 
 }

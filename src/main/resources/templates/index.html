@@ -26,6 +26,7 @@
           <ul class="nav nav-drawer">
             <li class="nav-item active"> <a href="index"><i class="mdi mdi-home"></i> 后台首页</a> </li>
             <li class="nav-item active"> <a href="flow"><i class="mdi mdi-home"></i> 流水线</a> </li>
+            <li class="nav-item active"> <a href="updateFile"><i class="mdi mdi-home"></i> 程序升级</a> </li>
           </ul>
           </ul>
         </nav>
@@ -50,19 +51,7 @@
           </div>
           
           <ul class="topbar-right">
-            <li class="dropdown dropdown-profile">
-              <a href="javascript:void(0)" data-toggle="dropdown">
-                <img class="img-avatar img-avatar-48 m-r-10" src="images/users/avatar.jpg" alt="笔下光年" />
-                <span>笔下光年 <span class="caret"></span></span>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-right">
-                <li> <a href="lyear_pages_profile.html"><i class="mdi mdi-account"></i> 个人信息</a> </li>
-                <li> <a href="lyear_pages_edit_pwd.html"><i class="mdi mdi-lock-outline"></i> 修改密码</a> </li>
-                <li> <a href="javascript:void(0)"><i class="mdi mdi-delete"></i> 清空缓存</a></li>
-                <li class="divider"></li>
-                <li> <a href="lyear_pages_login.html"><i class="mdi mdi-logout-variant"></i> 退出登录</a> </li>
-              </ul>
-            </li>
+
             <!--切换主题配色-->
 		    <li class="dropdown dropdown-skin">
 			  <span data-toggle="dropdown" class="icon-palette"><i class="mdi mdi-palette"></i></span>
@@ -209,7 +198,7 @@
               <div class="card-body clearfix">
                 <div class="pull-right">
                   <p class="h6 text-white m-t-0">设备数量</p>
-                  <p class="h3 text-white m-b-0 fa-1-5x">102,125.00</p>
+                  <p id="deviceNum" class="h3 text-white m-b-0 fa-1-5x">102,125.00</p>
                 </div>
                 <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-currency-cny fa-1-5x"></i></span> </div>
               </div>
@@ -221,7 +210,7 @@
               <div class="card-body clearfix">
                 <div class="pull-right">
                   <p class="h6 text-white m-t-0">用户总数</p>
-                  <p class="h3 text-white m-b-0 fa-1-5x">920,000</p>
+                  <p id="userNum" class="h3 text-white m-b-0 fa-1-5x">920,000</p>
                 </div>
                 <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-account fa-1-5x"></i></span> </div>
               </div>
@@ -233,7 +222,7 @@
               <div class="card-body clearfix">
                 <div class="pull-right">
                   <p class="h6 text-white m-t-0">图片总量</p>
-                  <p class="h3 text-white m-b-0 fa-1-5x">34,005,000</p>
+                  <p id="imgNum" class="h3 text-white m-b-0 fa-1-5x">34,005,000</p>
                 </div>
                 <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-arrow-down-bold fa-1-5x"></i></span> </div>
               </div>
@@ -244,8 +233,8 @@
             <div class="card bg-purple">
               <div class="card-body clearfix">
                 <div class="pull-right">
-                  <p class="h6 text-white m-t-0">新增留言</p>
-                  <p class="h3 text-white m-b-0 fa-1-5x">153 条</p>
+                  <p class="h6 text-white m-t-0">流水线数量</p>
+                  <p id="flowNum" class="h3 text-white m-b-0 fa-1-5x">153 条</p>
                 </div>
                 <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-comment-outline fa-1-5x"></i></span> </div>
               </div>
@@ -303,88 +292,67 @@
 
 <!--图表插件-->
 <script type="text/javascript" src="js/Chart.js"></script>
-<script type="text/javascript">
-$(document).ready(function(e) {
-    var $dashChartBarsCnt  = jQuery( '.js-chartjs-bars' )[0].getContext( '2d' ),
-        $dashChartLinesCnt = jQuery( '.js-chartjs-lines' )[0].getContext( '2d' );
-    
-    var $dashChartBarsData = {
-		labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-		datasets: [
-			{
-				label: '注册用户',
-                borderWidth: 1,
-                borderColor: 'rgba(0,0,0,0)',
-				backgroundColor: 'rgba(51,202,185,0.5)',
-                hoverBackgroundColor: "rgba(51,202,185,0.7)",
-                hoverBorderColor: "rgba(0,0,0,0)",
-				data: [2500, 1500, 1200, 3200, 4800, 3500, 1500]
-			}
-		]
-	};
-    var $dashChartLinesData = {
-		labels: ['2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014'],
-		datasets: [
-			{
-				label: '交易资金',
-				data: [20, 25, 40, 30, 45, 40, 55, 40, 48, 40, 42, 50],
-				borderColor: '#358ed7',
-				backgroundColor: 'rgba(53, 142, 215, 0.175)',
-                borderWidth: 1,
-                fill: false,
-                lineTension: 0.5
-			}
-		]
-	};
-    
-    new Chart($dashChartBarsCnt, {
-        type: 'bar',
-        data: $dashChartBarsData
-    });
-    
-    var myLineChart = new Chart($dashChartLinesCnt, {
-        type: 'line',
-        data: $dashChartLinesData,
-    });
-});
-</script>
 
 <script type="text/javascript">
   $(document).ready(function(){
-
-  });
-
-  $.ajax({
-    url: '/upload/all',
-    contentType : "application/json",
-    dataType: 'json',
-    type: 'get',
-    success:function(result){
-      if (result.code ==0 ) {
-        $.each(result.data,function (i,flow) {
-          let imgNumber =0;
-          $.each(flow.childrenFolderList,function (j,img){
+    $.ajax({
+      url: '/upload/all',
+      contentType : "application/json",
+      dataType: 'json',
+      type: 'get',
+      success:function(result){
+        if (result.code ==0 ) {
+          $.each(result.data,function (i,flow) {
+            let imgNumber =0;
+            $.each(flow.childrenFolderList,function (j,img){
               //累计每条流水线上共有多少张图片
-            imgNumber+=img.imgList.length;
+              imgNumber+=img.imgList.length;
+            });
+            console.log(flow.originName+"一共有："+imgNumber+"张图片");
+            let tr ="<tr>\n" +
+                    "<td>"+flow.id+"</td>\n" +
+                    "<td>"+flow.originName+"</td>\n" +
+                    "<td>"+flow.childrenFolderList.length+"</td>\n" +
+                    "<td>"+imgNumber+"</td>\n" +
+                    "<td><button class='btn btn-xs btn-primary' onclick='test("+flow.id+")'>详情</button></td>\n" +
+                    "</tr>";
+            $("#flowData").append(tr);
           });
-          console.log(flow.originName+"一共有："+imgNumber+"张图片");
-          let tr ="<tr>\n" +
-                  "<td>"+flow.id+"</td>\n" +
-                  "<td>"+flow.originName+"</td>\n" +
-                  "<td>"+flow.childrenFolderList.length+"</td>\n" +
-                  "<td>"+imgNumber+"</td>\n" +
-                  "<td><button class='btn btn-xs btn-primary' onclick='test("+flow.id+")'>详情</button></td>\n" +
-                  "</tr>";
-          $("#flowData").append(tr);
-        });
-      } else {
-        alert("数据请求失败");
+        } else {
+          alert("数据请求失败");
+        }
       }
-    }
+    });
+
+    $.ajax({
+      url: '/index/data',
+      contentType : "application/json",
+      dataType: 'json',
+      type: 'get',
+      success:function(result){
+        if (result.code ==0 ) {
+          console.log(result);
+          $('#deviceNum').text(result.data.deviceNum);
+          $('#userNum').text(result.data.userNum);
+          $('#imgNum').text(result.data.imgNum);
+          $('#flowNum').text(result.data.flowNum);
+        } else {
+          alert("数据请求失败");
+        }
+      }
+    });
+
   });
+
+
+
+
+
   function test(id) {
         location.href = "image?id="+id;
   }
+
+
 </script>
 </body>
 </html>

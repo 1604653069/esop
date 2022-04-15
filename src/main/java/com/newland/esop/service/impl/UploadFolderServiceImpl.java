@@ -4,10 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.newland.esop.common.FileConstants;
 import com.newland.esop.dao.UploadFolderDao;
-import com.newland.esop.pojo.ChildrenFolder;
-import com.newland.esop.pojo.ImageUpload;
-import com.newland.esop.pojo.Img;
-import com.newland.esop.pojo.UploadFolder;
+import com.newland.esop.pojo.*;
+import com.newland.esop.service.AppUpdateService;
 import com.newland.esop.service.ChildrenFolderService;
 import com.newland.esop.service.ImgService;
 import com.newland.esop.service.UploadFolderService;
@@ -18,9 +16,10 @@ import net.lingala.zip4j.core.ZipFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +35,9 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
 
     @Autowired
     private ImgService imgService;
+
+    @Autowired
+    private AppUpdateService appUpdateService;
     /**
      * 将上传的文件保存在数据库中
      * @param uploadFiles
@@ -44,12 +46,15 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
     @Override
     public boolean uploadFile(List<MultipartFile> uploadFiles) {
         String originFileName = "";
+        String suffix = "";
         //1.遍历上传的文件
         for (MultipartFile uploadFile:uploadFiles) {
             try {
                 //保存上传的原件名
                 originFileName = uploadFile.getOriginalFilename().substring(0,uploadFile.getOriginalFilename().lastIndexOf("."));
+                suffix = uploadFile.getOriginalFilename().substring(uploadFile.getOriginalFilename().lastIndexOf("."));
                 System.out.println("原上传的名称:"+originFileName);
+                System.out.println("原上传的后缀:"+suffix);
                 //重命名原上传文件
                 String uuid = UUIDUtils.getUUID();
                 String fileName = uuid+uploadFile.getOriginalFilename().substring(uploadFile.getOriginalFilename().lastIndexOf("."));
@@ -72,7 +77,7 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
                 zipFile.extractAll(ftpUtils.getCURRENT_DIR());
                 //修改解压后的名称
                 File fileDir = new File(ftpUtils.getCURRENT_DIR());
-                    File[] files = fileDir.listFiles();
+                File[] files = fileDir.listFiles();
                 for (File file :files) {
                     if (file.getName().equals(originFileName) && file.isDirectory()) {
                         System.out.println("遍历的文件名称:"+file.getName());
@@ -98,6 +103,11 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
                         //重命名
                         file.renameTo(new File(ftpUtils.getCURRENT_DIR()+File.separator+uuid));
                     }
+                }
+                //删除上传的zip文件
+                File uploadZipFile = new File(ftpUtils.getCURRENT_DIR()+"/"+originFileName+suffix);
+                if (uploadZipFile.exists()) {
+                    uploadZipFile.delete();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -254,4 +264,127 @@ public class UploadFolderServiceImpl extends ServiceImpl<UploadFolderDao, Upload
         return imageUpload;
     }
 
+    /**
+     * 替换某条流水下的所有文件
+     */
+    @Override
+    public boolean replaceAll(Long id,MultipartFile uploadFile) {
+        try {
+            String originFileName = uploadFile.getOriginalFilename().substring(0,uploadFile.getOriginalFilename().lastIndexOf("."));
+            System.out.println("上传的文件为:"+originFileName);
+            String suffix = uploadFile.getOriginalFilename().substring(uploadFile.getOriginalFilename().lastIndexOf("."));
+            System.out.println("上传文件的后缀为:"+suffix);
+            //1.将要替换的文件上传到ftp中
+            ftpUtils.uploadToFtp(uploadFile.getInputStream(),uploadFile.getOriginalFilename(),false);
+            //2.解压文件,
+            ZipFile zipFile = new ZipFile(ftpUtils.getCURRENT_DIR()+ File.separator+uploadFile.getOriginalFilename());
+            zipFile.setFileNameCharset("gbk");
+            //3.解压的目录
+            zipFile.extractAll(ftpUtils.getCURRENT_DIR());
+            //4.从数据库中获取文件夹名称，并删除
+            UploadFolder uploadFolder = baseMapper.selectById(id);
+
+            //删除数据库中的数据
+            QueryWrapper<ChildrenFolder> queryWrapper = new QueryWrapper();
+            queryWrapper.eq("fid",id);
+
+            List<ChildrenFolder> childrenFolders = childrenFolderService.list(queryWrapper);
+            System.out.println("子文件夹为:"+childrenFolders.toString());
+            List<Long> childrenFoldersId = childrenFolders.stream().map(childrenFolder -> childrenFolder.getId()).collect(Collectors.toList());
+            //删除图片
+            imgService.removeByIds(childrenFoldersId);
+            //删除文件夹
+            childrenFolderService.remove(queryWrapper);
+
+            File fileDir = new File(ftpUtils.getCURRENT_DIR());
+            File[] files = fileDir.listFiles();
+            for (File file :files) {
+                if (file.getName().equals(originFileName) && file.isDirectory()) {
+                    System.out.println("遍历的文件名称:"+file.getName());
+                    File[] files1 = file.listFiles();
+                    for (File file1:files1) {
+                        ChildrenFolder childrenFolder = new ChildrenFolder();
+                        childrenFolder.setFid(id);
+                        childrenFolder.setFileName(file1.getName());
+                        childrenFolderService.save(childrenFolder);
+                        File[] files2 = file1.listFiles();
+                        for (File file2:files2) {
+                            System.out.println(file2.getName());
+                            Img img = new Img();
+                            img.setFid(childrenFolder.getId());
+                            img.setOriginName(file2.getName());
+                            String s = UUIDUtils.getUUID() + file2.getName().substring(file2.getName().lastIndexOf("."));
+                            img.setFileName(s);
+                            img.setImgUrl(FileConstants.SHOW_DIR+uploadFolder.getFileName()+"/"+childrenFolder.getFileName()+"/"+img.getFileName());
+                            imgService.save(img);
+                            file2.renameTo(new File(ftpUtils.getCURRENT_DIR()+File.separator+file.getName()+"/"+childrenFolder.getFileName()+"/"+s));
+                        }
+                    }
+                    //删除原先的文件夹
+                    FileUtils.deleteDir(new File(ftpUtils.getCURRENT_DIR()+File.separator+"/"+uploadFolder.getFileName()));
+                    //重命名
+                    file.renameTo(new File(ftpUtils.getCURRENT_DIR()+File.separator+uploadFolder.getFileName()));
+                }
+            }
+            //删除上传的zip文件
+            File uploadZipFile = new File(ftpUtils.getCURRENT_DIR()+"/"+originFileName+suffix);
+            if (uploadZipFile.exists()) {
+                uploadZipFile.delete();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateAPP(int type, int code, MultipartFile multipartFile) {
+
+        //1.上传文件的原名称
+        String originName = multipartFile.getOriginalFilename().substring(0,multipartFile.getOriginalFilename().lastIndexOf("."));
+        System.out.println("上传文件的原名称:"+originName);
+        //2.上传文件的后缀
+        String suffix = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+        System.out.println("上传文件的后缀:"+suffix);
+        String dir ="";
+        //3.获取上传文件的类型
+        if (type == 1) {
+            //上传类型为APP
+            dir = "apk";
+        } else if(type == 2) {
+            //上传类型为机顶盒
+            dir = "box";
+        }
+        //创建文件夹
+        File file = new File(ftpUtils.getCURRENT_DIR()+"/"+dir);
+        //文件不存在则创建文件
+        if (!file.exists()) {
+            file.mkdir();
+        }
+        //将文件上传到指定的目录上
+        String uuid = UUIDUtils.getUUID();
+        try {
+            ftpUtils.uploadToFtpDir(multipartFile.getInputStream(), file.getName(),uuid+suffix,false);
+            System.out.println("文件上传成功");
+            //删除数据库中所有之前的上级文件
+            QueryWrapper<AppUpdate> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("type",type);
+            appUpdateService.remove(queryWrapper);
+
+            AppUpdate appUpdate = new AppUpdate();
+            appUpdate.setCode(code);
+            appUpdate.setType(type);
+            appUpdate.setFileName(uuid+suffix);
+            appUpdate.setUrl(FileConstants.SHOW_DIR+file.getName()+"/"+(uuid+suffix));
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String uploadTime = simpleDateFormat.format(new Date());
+            appUpdate.setUploadDate(uploadTime);
+            appUpdateService.save(appUpdate);
+        } catch (Exception e) {
+            System.out.println("文件上传失败");
+            return false;
+        }
+
+        return true;
+    }
 }

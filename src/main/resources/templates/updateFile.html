@@ -206,7 +206,7 @@
                         <div class="card">
                             <div class="card-toolbar clearfix">
                                 <div class="toolbar-btn-action">
-                                    <a class="btn btn-primary m-r-5" onclick="addFlow()"><i class="mdi mdi-plus"></i> 新增</a>
+                                    <a class="btn btn-primary m-r-5" onclick="addUpdateFile()"><i class="mdi mdi-plus"></i> 新增</a>
 <!--                                    <a class="btn btn-danger" href="#!"><i class="mdi mdi-window-close"></i> 删除</a>-->
                                 </div>
                             </div>
@@ -216,15 +216,10 @@
                                     <table class="table table-bordered">
                                         <thead>
                                         <tr>
-<!--                                            <th>-->
-<!--                                                <label class="lyear-checkbox checkbox-primary">-->
-<!--                                                    <input type="checkbox" id="check-all"><span></span>-->
-<!--                                                </label>-->
-<!--                                            </th>-->
                                             <th>编号</th>
-                                            <th>流水线名称</th>
-                                            <th>设备数量</th>
-                                            <th>图片数量</th>
+                                            <th>上传名称</th>
+                                            <th>上传类型</th>
+                                            <th>上传时间</th>
                                             <th>操作</th>
                                         </tr>
                                         </thead>
@@ -252,37 +247,33 @@
 <script src="js/jquery-tags-input/jquery.tagsinput.min.js"></script>
 <script src="js/jconfirm/jquery-confirm.min.js"></script>
 <script type="text/javascript">
-    $(document).ready(function(){
-
-    });
     $.ajax({
-        url: '/upload/all',
+        url: '/app/list',
         contentType : "application/json",
         dataType: 'json',
         type: 'get',
         success:function(result){
             if (result.code ==0 ) {
-                $.each(result.data,function (i,flow) {
-                    let imgNumber =0;
-                    $.each(flow.childrenFolderList,function (j,img){
-                        //累计每条流水线上共有多少张图片
-                        imgNumber+=img.imgList.length;
-                    });
-                    console.log(flow.originName+"一共有："+imgNumber+"张图片");
-                   var tr="";
-                   tr+="<tr>\n" +
-                        "<td>"+flow.id+"</td>\n" +
-                        "<td>"+flow.originName+"</td>\n" +
-                        "<td>"+flow.childrenFolderList.length+"</td>\n" +
-                        "<td><font class='text-success'>"+imgNumber+"</font></td>\n" +
+                $.each(result.data,function (i,updateFile) {
+                    var tr = "";
+                    var type = "";
+                    if (updateFile.type==1) {
+                        type="APP程序"
+                    } else {
+                        type = "机顶盒"
+                    }
+                    tr+="<tr>\n" +
+                        "<td>"+updateFile.id+"</td>\n" +
+                        "<td>"+updateFile.fileName+"</td>\n" +
+                        "<td>"+type+"</td>\n" +
+                        "<td><font class='text-success'>"+updateFile.uploadDate+"</font></td>\n" +
                         "<td>\n" +
                         "<div class=\"btn-group\">\n" +
-                        "<a class='btn btn-xs btn-default' onclick='showDetail("+flow.id+")' title='查看' data-toggle='tooltip'><i class='mdi mdi-eye'></i></a>\n" +
-                        "<a class='btn btn-xs btn-default' onclick='deleteFlow("+flow.id+")' title='删除' data-toggle='tooltip'><i class='mdi mdi-window-close'></i></a>"+
+                        "<a class='btn btn-xs btn-default' onclick='deleteFile("+updateFile.id+")' title='删除' data-toggle='tooltip'><i class='mdi mdi-window-close'></i></a>"+
                         "</div>\n" +
                         "</td>\n" +
                         "</tr>";
-                   $('#flows').append(tr);
+                    $('#flows').append(tr);
                 });
             } else {
                 alert("数据请求失败");
@@ -290,47 +281,22 @@
         }
     });
 
-    function showDetail(id){
-        location.href = "image?id="+id;
-    }
-
-    function addFlow() {
-        location.href = "addFlow";
-    }
-
-    function deleteFlow(id) {
-        $.alert({
-            title: '提示',
-            content: '是否删除',
-            buttons: {
-                confirm: {
-                    text: '确认',
-                    btnClass: 'btn-primary',
-                    action: function(){
-                        var dataForm ={'id':id}
-                        $.ajax({
-                            url: '/upload/deleteFolder',
-                            type: 'get',
-                            data:dataForm,
-                            success:function(result){
-                                if (result.code==0) {
-                                    alert("删除成功")
-                                    location.href = "flow";
-                                } else {
-                                    alert("删除失败");
-                                }
-                            }
-                        });
-                    }
-                },
-                cancel: {
-                    text: '取消',
-                    action: function () {
-
-                    }
-                }
+    function deleteFile(id) {
+        var parm = {'id':id};
+        $.ajax({
+            url: '/app/delete',
+            contentType: "application/json",
+            dataType: 'json',
+            type: 'get',
+            data:parm,
+            success: function (result) {
+                alert("删除成功")
+                location.href="updateFile"
             }
         });
+    }
+    function addUpdateFile() {
+        location.href="update"
     }
 </script>
 </body>

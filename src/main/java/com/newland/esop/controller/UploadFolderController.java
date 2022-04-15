@@ -62,10 +62,26 @@ public class UploadFolderController {
         }
     }
 
+    @PostMapping("/replaceAll")
+    private R replaceAll(@RequestParam("id")Long id,@RequestParam("fileUpload") MultipartFile multipartFile) {
+        System.out.println("上传的id为:"+id);
+        System.out.println("上传的文件名称为:"+multipartFile.getOriginalFilename());
+        uploadFolderService.replaceAll(id,multipartFile);
+        return R.ok();
+    }
 
     @GetMapping("/delImg")
     public R uploadDelImg(@RequestParam("filename")String filename) {
         tempService.delImg(filename);
+        return R.ok();
+    }
+
+    @PostMapping("/updateFile")
+    public R uploadUpdateFile(@RequestParam("type")int type,@RequestParam("code")int code,@RequestParam("fileupload")MultipartFile multipartFile) {
+        System.out.println("上传的文件类型 type--->"+type);
+        System.out.println("上传的文件 code --->"+code);
+        System.out.println("上传的文件名称 name--->"+multipartFile.getOriginalFilename());
+        uploadFolderService.updateAPP(type,code,multipartFile);
         return R.ok();
     }
 }

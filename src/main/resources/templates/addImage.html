@@ -36,6 +36,9 @@
                     <ul class="nav nav-drawer">
                         <li class="nav-item"> <a href="flow"><i class="mdi mdi-home"></i> 流水线</a> </li>
                     </ul>
+                    <ul class="nav nav-drawer">
+                        <li class="nav-item"> <a href="updateFile"><i class="mdi mdi-home"></i>程序升级</a> </li>
+                    </ul>
                 </nav>
             </div>
 
@@ -58,19 +61,7 @@
                     </div>
 
                     <ul class="topbar-right">
-                        <li class="dropdown dropdown-profile">
-                            <a href="javascript:void(0)" data-toggle="dropdown">
-                                <img class="img-avatar img-avatar-48 m-r-10" src="images/users/avatar.jpg" alt="笔下光年" />
-                                <span>笔下光年 <span class="caret"></span></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li> <a href="lyear_pages_profile.html"><i class="mdi mdi-account"></i> 个人信息</a> </li>
-                                <li> <a href="lyear_pages_edit_pwd.html"><i class="mdi mdi-lock-outline"></i> 修改密码</a> </li>
-                                <li> <a href="javascript:void(0)"><i class="mdi mdi-delete"></i> 清空缓存</a></li>
-                                <li class="divider"></li>
-                                <li> <a href="lyear_pages_login.html"><i class="mdi mdi-logout-variant"></i> 退出登录</a> </li>
-                            </ul>
-                        </li>
+
                         <!--切换主题配色-->
                         <li class="dropdown dropdown-skin">
                             <span data-toggle="dropdown" class="icon-palette"><i class="mdi mdi-palette"></i></span>
@@ -457,6 +448,8 @@
                 if (result.code==0) {
                     alert("添加成功!")
                     location.href = "image?id="+getUrlParam('id');
+                } else if (result.code ==-1) {
+                    alert("添加失败:"+result.msg)
                 }
             }
         });

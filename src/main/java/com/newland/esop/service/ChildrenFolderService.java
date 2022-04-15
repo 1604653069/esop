@@ -13,13 +13,16 @@ public interface ChildrenFolderService extends IService<ChildrenFolder> {
     List<ChildrenFolder> getChildrenFolderByIds(List<Long> fIds);
 
     boolean addChildrenFolder(Long fid,String name, List<MultipartFile> multipartFile);
+
     boolean addChildrenFolder2(Long fid,String name,List<String> filenames);
 
     boolean updateChildrenFolder(Long fid,Long id,String name,List<MultipartFile> multipartFiles);
+
     boolean updateChildrenFolder2(Long fid,String ids,String filenames);
 
     boolean deleteFolderImg(Long fid,Long id);
 
     UploadFolder getFolderByChildId(Long id);
 
+    ChildrenFolder getFolderByName(String name);
 }

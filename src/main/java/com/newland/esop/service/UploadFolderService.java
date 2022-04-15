@@ -44,4 +44,13 @@ public interface UploadFolderService extends IService<UploadFolder> {
     boolean deleteFolder(Long id);
 
     ImageUpload uploadImage(MultipartFile multipartFile);
+
+    /**
+     * 替换某条流水线下的所有的信息
+     * @param multipartFile
+     * @return
+     */
+    boolean replaceAll(Long id,MultipartFile multipartFile);
+
+    boolean updateAPP(int type,int code,MultipartFile multipartFile);
 }

@@ -1,6 +1,7 @@
 package com.newland.esop.controller;
 
 import com.newland.esop.common.R;
+import com.newland.esop.pojo.ChildrenFolder;
 import com.newland.esop.pojo.UploadFolder;
 import com.newland.esop.service.ChildrenFolderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("children")
 public class ChildrenFolderController {
+
     @Autowired
     private ChildrenFolderService childrenFolderService;
 
@@ -36,7 +38,10 @@ public class ChildrenFolderController {
         if (!filenames.isEmpty()) {
             String[] split = filenames.split(",");
             List<String> filename = Arrays.stream(split).collect(Collectors.toList());
-            childrenFolderService.addChildrenFolder2(fid,name,filename);
+            boolean b = childrenFolderService.addChildrenFolder2(fid, name, filename);
+            if (!b) {
+                return R.error(-1,"设备名称重复,请修改后重新添加");
+            }
         }
         return R.ok();
     }
@@ -73,5 +78,9 @@ public class ChildrenFolderController {
         return R.ok().put("data",folder);
     }
 
-
+    @GetMapping("/getChildrenByName")
+    public R getFolderByName(@RequestParam("name") String name) {
+        ChildrenFolder childrenFolder = childrenFolderService.getFolderByName(name);
+        return R.ok().put("data",childrenFolder);
+    }
 }

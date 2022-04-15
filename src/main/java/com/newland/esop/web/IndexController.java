@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/")
 public class IndexController {
     @GetMapping("index")
-    public String index(){
+    public String index() {
         return "index";
     }
 
@@ -35,5 +35,20 @@ public class IndexController {
     @GetMapping("/addFlow")
     public String addFlow() {
         return "addFlow";
+    }
+
+    @GetMapping("/replaceAll")
+    public String replaceAll() {
+        return "replaceAll";
+    }
+
+    @GetMapping("/update")
+    public String update() {
+        return "update";
+    }
+
+    @GetMapping("/updateFile")
+    public String fileList() {
+        return "updateFile";
     }
 }
